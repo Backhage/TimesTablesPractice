@@ -12,10 +12,9 @@
         public static void Main()
         {
             WriteLine($"Välkommen till gångertabellsspelet!");
-            Write("Skriv ditt namn: ");
-            var player = ReadLine();
 
-            var askFunc = par(AskUntilCorrect, q => Write(q), () => ReadLine());
+            var player = QueryPlayer("Skriv ditt namn: ");
+            var askFunc = par(AskUntilCorrect, QueryPlayer);
 
             var result =
                 from i in Range(1, 10)
@@ -27,13 +26,19 @@
             WriteLine($"Bra jobbat {player}! Du klarade alla {evaluatedResult.Count} frågor på {evaluatedResult.Sum()} försök.");
         }
 
-        private static Func<Action<string>, Func<string>, string, int, int> AskUntilCorrect
-            => (queryFunc, readFunc, question, answer) =>
+        private static Func<string, string> QueryPlayer
+            => query => 
             {
-                queryFunc(question);
-                var response = readFunc();
+                Write(query);
+                return ReadLine();
+            };
+
+        private static Func<Func<string, string>, string, int, int> AskUntilCorrect
+            => (queryFunc, question, answer) =>
+            {
+                var response = queryFunc(question);
                 if (Correct(response, answer)) return 1;
-                return 1 + AskUntilCorrect(queryFunc, readFunc, question, answer);
+                return 1 + AskUntilCorrect(queryFunc, question, answer);
             };
 
         private static Func<string, int, bool> Correct => (input, answer)
@@ -53,10 +58,9 @@
         [Test]
         public static void TestReadUntilCorrect()
         {
-            static void queryFunc(string _) { }
-            static string readFunc() => "2";
+            static string queryFunc(string _) => "2";
 
-            var askFunc = par(AskUntilCorrect, queryFunc, readFunc);
+            var askFunc = par(AskUntilCorrect, queryFunc);
 
             Assert.That(askFunc(string.Empty, 2), Is.EqualTo(1));
         }
